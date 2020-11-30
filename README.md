@@ -7,6 +7,7 @@ This repository hosts the offical implementation of [BraggNN](https://arxiv.org/
 
 * the file names of the dataset are hard coded. you need to prepare your dataset and update the file name in the code.
 * uncompress the dataset.tar.gz (to frames-exp4train.hdf5 and peaks-exp4train-psz11.hdf5 under folder dataset) if you want to try with our dataset.
+* The code will use all available GPUs to data parallel training on the node if -gpus is provided.
 
 # Requirement 
 
@@ -15,7 +16,7 @@ This repository hosts the offical implementation of [BraggNN](https://arxiv.org/
 # Import a pre-trained model
 ```
 model  = BraggNN(imgsz=, fcsz=) # should use the same argu as it in the training.
-mdl_fn = 'mdl-it%10000.pth'
+mdl_fn = 'models/fc16_8_4_2-sz11.pth'
 model.load_state_dict(torch.load(mdl_fn, map_location=torch.device('cpu')))
 ```
 
@@ -39,7 +40,8 @@ with torch.no_grad():
 
 ## Data preparation for model re-training
 
-* Two HDF5 files are need for retrain. The first one, let's name it as frame.h5, contains your diffraction frames, this hdf5 file stores a 3D array (dataset name must be "frames"), and the first dimension is the frame ID starts with 0, i.e., the series of frames at different scanning angle. 
+* Two HDF5 files are need for retrain. 
+* The first one, let's name it as frame.h5, contains your diffraction frames, this hdf5 file stores a 3D array (dataset name must be "frames"), and the first dimension is the frame ID starts with 0, i.e., the series of frames at different scanning angle. 
 * The second hdf5 file stores the peak position information. In our paper, we used the peak position that we got using 2D psuedo Voigt fitting. This file stores three 1D array with each record / index represent different information of a peak. The first 1D array, must be named as "peak_fidx" represents the index of the frame (in the frames.h5) that the peak sits on; the second array, "peak_row" is the vertical distance, in pixel and can be floating point number, from the peak center to the top edge of the frame. Similarly, the "peak_col" denotes horizental distance, in pixel and can be floating point number, from peak center to left edge of the frame. 
 
 ## configuration and hyper-parameters
