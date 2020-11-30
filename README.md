@@ -1,7 +1,7 @@
 # About
 
 This repository hosts the offical implementation of BraggNN for locating the Bragg peak position in a much fater way, compare with conventional Voigt fitting.
-![VoigtNet model Architecture](img/BraggNN.png)
+![BraggNN model Architecture](img/BraggNN.png)
 
 # Notes
 
@@ -12,14 +12,23 @@ This repository hosts the offical implementation of BraggNN for locating the Bra
 * PyTorch=1.5.0
 
 # Import a pre-trained model
+```
+model = BraggNN(imgsz=, fcsz=) # should use the same argu as it in the training.
+mdl_fn = 'mdl-it%10000.pth'
+model.load_state_dict(torch.load(mdl_fn, map_location=torch.device('cpu')))
+```
 
 ## Data preparaion 
 
-TBD 
+You need to crop the peaks with the patch size you used to when train the model. As described in the paper, we using Connected-component labeling algorithm to get all individaul peaks and then crop it based on the maixma location. The cropped patch will be the input of the model.
 
 ## run model to estimate peak center
 
-TBD
+Once patches are prepared, using code clip as follows for infernce
+```
+with torch.no_grad():
+    pred = model.forward(X_test).cpu().numpy()  
+```
 
 # Retrain
 
