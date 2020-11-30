@@ -32,7 +32,7 @@ with torch.no_grad():
 
 # Retrain
 
-* We provied some pre-trained model which should work well if the patch size we used make sense in your experiment. 
+* We provied some pre-trained model (input patfh size is 11x11) which should work well if the patch size we used make sense in your experiment. 
 * if you have ground truth data, we encourage you retrain model for your use case. we tried to simplify the way to retrain the model using your own data, you only need to prepare your data based on our requirment
 
 ## Data preparation for model re-training
