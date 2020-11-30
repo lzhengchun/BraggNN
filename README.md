@@ -1,6 +1,6 @@
 # About
 
-This repository hosts the offical implementation of BraggNN for locating the Bragg peak position in a much fater way, compare with conventional Voigt fitting.
+This repository hosts the offical implementation of [BraggNN](https://arxiv.org/abs/2008.08198) for locating the Bragg peak position in a much fater way, compare with conventional Voigt fitting.
 ![BraggNN model Architecture](img/BraggNN.png)
 
 # Notes
