@@ -6,6 +6,7 @@ This repository hosts the offical implementation of [BraggNN](https://arxiv.org/
 # Notes
 
 * the file names of the dataset are hard coded. you need to prepare your dataset and update the file name in the code.
+* uncompress the dataset.tar.gz (to frames-exp4train.hdf5 and peaks-exp4train-psz11.hdf5 under folder dataset) if you want to try with our dataset.
 
 # Requirement 
 
@@ -13,14 +14,15 @@ This repository hosts the offical implementation of [BraggNN](https://arxiv.org/
 
 # Import a pre-trained model
 ```
-model = BraggNN(imgsz=, fcsz=) # should use the same argu as it in the training.
+model  = BraggNN(imgsz=, fcsz=) # should use the same argu as it in the training.
 mdl_fn = 'mdl-it%10000.pth'
 model.load_state_dict(torch.load(mdl_fn, map_location=torch.device('cpu')))
 ```
 
 ## Data preparaion 
 
-You need to crop the peaks with the patch size you used to when train the model. As described in the paper, we using Connected-component labeling algorithm to get all individaul peaks and then crop it based on the maixma location. The cropped patch will be the input of the model.
+* You need to crop the peaks with the patch size you used to when train the model. As described in the paper, we using Connected-component labeling algorithm to get all individaul peaks and then crop it based on the maixma location. The cropped patch will be the input of the model.
+* Thus, the current design doesnot support overlapped peaks.
 
 ## run model to estimate peak center
 
@@ -32,7 +34,7 @@ with torch.no_grad():
 
 # Retrain
 
-* We provied some pre-trained model (input patfh size is 11x11) which should work well if the patch size we used make sense in your experiment. 
+* We provied some pre-trained models (input patfh size is 11x11) which should work well if the patch size we used make sense in your experiment. 
 * if you have ground truth data, we encourage you retrain model for your use case. we tried to simplify the way to retrain the model using your own data, you only need to prepare your data based on our requirment
 
 ## Data preparation for model re-training
@@ -48,6 +50,6 @@ with torch.no_grad():
 
 # Advanced configuration for the model
 
-If you are working on normal diffractions that have reasonablly OK peaks, you do not need to customize the model. Based on our experience, the default model architecture should work reasonally well for any normal cases. The most you need is just a re-train. 
+* If you are working on normal diffractions that have reasonablly OK peaks, you do not need to customize the model. Based on our experience, the default model architecture should work reasonally well for any normal cases. The most you need is just a re-train. 
 
-If you have some basic knowledge about machine learning and know the intuition of tuning model size based on training error and validation error. You are encorage to keep reading instructions to change the size of the model.
+* If you have some basic knowledge about machine learning and know the intuition of tuning model size based on training error and validation error. You are encorage to keep reading instructions to change the size of the model.
