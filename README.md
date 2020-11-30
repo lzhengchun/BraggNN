@@ -1,11 +1,14 @@
+![version](https://img.shields.io/badge/Version-v1.0.0-blue.svg?style=plastic)
+![PyTorch](https://img.shields.io/badge/PyTorch-v1.5.0-green.svg?style=plastic)
+![license](https://img.shields.io/badge/license-CC_BY--NC-red.svg?style=plastic)
 # About
 
-This repository hosts the offical implementation of [BraggNN](https://arxiv.org/abs/2008.08198) for locating the Bragg peak position in a much fater way, compare with conventional Voigt fitting.
+This repository hosts the offical implementation of [BraggNN](https://arxiv.org/abs/2008.08198) for locating the Bragg peak position in a much fater way, compare with conventional Voigt fitting. The following figure shows an example of the model archtecture, the depth and size of CNN layers and Dense layers are customizable in the implementation.
 ![BraggNN model Architecture](img/BraggNN.png)
 
 # Notes
 
-* the file names of the dataset are hard coded. you need to prepare your dataset and update the file name in the code.
+* The file names of the dataset are hard coded. you need to prepare your dataset and update the file name in the code.
 * uncompress the dataset.tar.gz (to frames-exp4train.hdf5 and peaks-exp4train-psz11.hdf5 under folder dataset) if you want to try with our dataset.
 * The code will use all available GPUs to data parallel training on the node if -gpus is provided.
 
