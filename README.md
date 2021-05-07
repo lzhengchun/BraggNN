@@ -36,7 +36,7 @@ with torch.no_grad():
     pred = model.forward(X_test).cpu().numpy()  
 ```
 ## refer to demo-inference.ipynb for a complete sample code for inference 
-demo-inference.ipynb has complete piece of code for inference 
+`demo-inference.ipynb` has complete piece of code for inference 
 
 # Retrain
 
