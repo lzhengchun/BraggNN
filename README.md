@@ -16,7 +16,7 @@ This repository hosts the offical implementation of [BraggNN](https://arxiv.org/
 
 * PyTorch=1.5.0
 
-# Import a pre-trained model
+# Import a pre-trained model for inference (peak locating)
 ```
 model  = BraggNN(imgsz=, fcsz=) # should use the same argu as it in the training.
 mdl_fn = 'models/fc16_8_4_2-sz11.pth'
@@ -35,8 +35,8 @@ Once patches are prepared, using code clip as follows for infernce
 with torch.no_grad():
     pred = model.forward(X_test).cpu().numpy()  
 ```
-## refer demo-inference.ipynb for a complete sample code for inference 
-demo-inference.ipynb
+## refer to demo-inference.ipynb for a complete sample code for inference 
+demo-inference.ipynb has complete piece of code for inference 
 
 # Retrain
 
