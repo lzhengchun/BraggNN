@@ -35,6 +35,8 @@ Once patches are prepared, using code clip as follows for infernce
 with torch.no_grad():
     pred = model.forward(X_test).cpu().numpy()  
 ```
+## refer demo-inference.ipynb for a complete sample code for inference 
+demo-inference.ipynb
 
 # Retrain
 
