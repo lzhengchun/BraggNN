@@ -22,6 +22,7 @@ model  = BraggNN(imgsz=, fcsz=) # should use the same argu as it in the training
 mdl_fn = 'models/fc16_8_4_2-sz11.pth'
 model.load_state_dict(torch.load(mdl_fn, map_location=torch.device('cpu')))
 ```
+Each patch must be rescaled using min-max normalization before feeding into the BraggNN for inference.
 
 ## Data preparaion 
 
