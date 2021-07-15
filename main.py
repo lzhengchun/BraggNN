@@ -1,4 +1,3 @@
-#! /homes/zhengchun.liu/usr/miniconda3/envs/torch/bin/python
 from model import model_init, BraggNN
 import torch, argparse, os, time, sys, shutil
 from util import str2bool, str2tuple, s2ituple
@@ -11,7 +10,7 @@ parser.add_argument('-expName',type=str, default="debug", help='Experiment name'
 parser.add_argument('-lr',     type=float,default=5e-4, help='learning rate')
 parser.add_argument('-mbsize', type=int, default=512, help='mini batch size')
 parser.add_argument('-maxep',  type=int, default=100000, help='max training epoches')
-parser.add_argument('-fcsz',  type=s2ituple, default='16_8_4_2', help='dense layers')
+parser.add_argument('-fcsz',  type=s2ituple, default='16_8_4_2', help='size of dense layers')
 parser.add_argument('-psz', type=int, default=11, help='working patch size')
 parser.add_argument('-aug', type=int, default=1, help='augmentation size')
 parser.add_argument('-print',  type=str2bool, default=False, help='1:print to terminal; 0: redirect to file')
@@ -68,7 +67,7 @@ def main(args):
 
         if epoch % 2000 == 0:
             if epoch == 0: 
-                X_mb_val, y_mb_val = get1batch4test(psz=args.psz, mb_size=6144, rnd_shift=0, dev=torch_devs)
+                X_mb_val, y_mb_val = get1batch4test(psz=args.psz, mb_size=None, idx=None, rnd_shift=0, dev=torch_devs)
 
             with torch.no_grad():
                 pred_val = model.forward(X_mb_val).cpu().numpy()            
