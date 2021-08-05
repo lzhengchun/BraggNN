@@ -7,7 +7,7 @@ import numpy as np
 parser = argparse.ArgumentParser(description='HEDM peak finding model.')
 parser.add_argument('-gpus',   type=str, default="", help='list of visiable GPUs')
 parser.add_argument('-expName',type=str, default="debug", help='Experiment name')
-parser.add_argument('-lr',     type=float,default=5e-4, help='learning rate')
+parser.add_argument('-lr',     type=float,default=3e-4, help='learning rate')
 parser.add_argument('-mbsize', type=int, default=512, help='mini batch size')
 parser.add_argument('-maxep',  type=int, default=100000, help='max training epoches')
 parser.add_argument('-fcsz',  type=s2ituple, default='16_8_4_2', help='size of dense layers')
@@ -49,7 +49,7 @@ def main(args):
         model = model.to(torch_devs)
 
     criterion = torch.nn.MSELoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=3e-4, weight_decay=0) # no decay needed when augment is on
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=0) # no decay needed when augment is on
 
     for epoch in range(args.maxep+1):
         time_it_st = time.time()
