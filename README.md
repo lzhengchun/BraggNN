@@ -49,9 +49,23 @@ with torch.no_grad():
 * Two HDF5 files are need to train the model. 
 * The first one, let's name it as frame.h5, contains your diffraction frames, this hdf5 file stores a 3D array (dataset name must be "frames"), and the first dimension is the frame ID starts with 0, i.e., the series of frames at different scanning angle. 
 * The second hdf5 file stores the peak position information. In our paper, we used the peak position that we got using 2D psuedo Voigt fitting. This file stores three 1D array with each record / index represent different information of a peak. The first 1D array, must be named as "peak_fidx" represents the index of the frame (in the frames.h5) that the peak sits on; the second array, "peak_row" is the vertical distance, in pixel and can be floating point number, from the peak center to the top edge of the frame. Similarly, the "peak_col" denotes horizental distance, in pixel and can be floating point number, from peak center to left edge of the frame. 
-* By default, this implementation will use 80% of the samples for training, the rest 20% for model validation and testing.
+* By default, this implementation will use 80% of the samples for training, the rest 20% for model validation.
 
 ## An Example of dataset meta
+### frames.h5
+```
+HDF5 "frames.h5" {
+GROUP "/" {
+   DATASET "frames" {
+      DATATYPE  H5T_IEEE_F32LE
+      DATASPACE  SIMPLE { ( 1440, 2048, 2048 ) / ( 1440, 2048, 2048 ) }
+   }
+}
+}
+```
+
+### peaks-exp4train-psz15.hdf5
+
 ```
 HDF5 "peaks-exp4train-psz15.hdf5" {
 GROUP "/" {
@@ -78,18 +92,6 @@ GROUP "/" {
 }
 }
 ```
-
-```
-HDF5 "frames.h5" {
-GROUP "/" {
-   DATASET "frames" {
-      DATATYPE  H5T_IEEE_F32LE
-      DATASPACE  SIMPLE { ( 1440, 2048, 2048 ) / ( 1440, 2048, 2048 ) }
-   }
-}
-}
-```
-
 
 ## configuration and hyper-parameters
 
