@@ -51,6 +51,46 @@ with torch.no_grad():
 * The second hdf5 file stores the peak position information. In our paper, we used the peak position that we got using 2D psuedo Voigt fitting. This file stores three 1D array with each record / index represent different information of a peak. The first 1D array, must be named as "peak_fidx" represents the index of the frame (in the frames.h5) that the peak sits on; the second array, "peak_row" is the vertical distance, in pixel and can be floating point number, from the peak center to the top edge of the frame. Similarly, the "peak_col" denotes horizental distance, in pixel and can be floating point number, from peak center to left edge of the frame. 
 * By default, this implementation will use 80% of the samples for training, the rest 20% for model validation and testing.
 
+## An Example of dataset meta
+`
+HDF5 "peaks-exp4train-psz15.hdf5" {
+GROUP "/" {
+   DATASET "deviations" {
+      DATATYPE  H5T_IEEE_F32LE
+      DATASPACE  SIMPLE { ( 77267 ) / ( 77267 ) }
+   }
+   DATASET "npeaks" {
+      DATATYPE  H5T_STD_U16LE
+      DATASPACE  SIMPLE { ( 77267 ) / ( 77267 ) }
+   }
+   DATASET "peak_col" {
+      DATATYPE  H5T_IEEE_F32LE
+      DATASPACE  SIMPLE { ( 77267 ) / ( 77267 ) }
+   }
+   DATASET "peak_fidx" {
+      DATATYPE  H5T_STD_U32LE
+      DATASPACE  SIMPLE { ( 77267 ) / ( 77267 ) }
+   }
+   DATASET "peak_row" {
+      DATATYPE  H5T_IEEE_F32LE
+      DATASPACE  SIMPLE { ( 77267 ) / ( 77267 ) }
+   }
+}
+}
+`
+
+`
+HDF5 "frames.h5" {
+GROUP "/" {
+   DATASET "frames" {
+      DATATYPE  H5T_IEEE_F32LE
+      DATASPACE  SIMPLE { ( 1440, 2048, 2048 ) / ( 1440, 2048, 2048 ) }
+   }
+}
+}
+`
+
+
 ## configuration and hyper-parameters
 
 * all hyper parameters and model configurations are given by using augment passing. 
