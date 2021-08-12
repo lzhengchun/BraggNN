@@ -52,7 +52,7 @@ with torch.no_grad():
 * By default, this implementation will use 80% of the samples for training, the rest 20% for model validation and testing.
 
 ## An Example of dataset meta
-`
+```
 HDF5 "peaks-exp4train-psz15.hdf5" {
 GROUP "/" {
    DATASET "deviations" {
@@ -77,9 +77,9 @@ GROUP "/" {
    }
 }
 }
-`
+```
 
-`
+```
 HDF5 "frames.h5" {
 GROUP "/" {
    DATASET "frames" {
@@ -88,7 +88,7 @@ GROUP "/" {
    }
 }
 }
-`
+```
 
 
 ## configuration and hyper-parameters
