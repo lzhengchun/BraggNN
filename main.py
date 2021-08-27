@@ -1,19 +1,20 @@
 from model import model_init, BraggNN
 import torch, argparse, os, time, sys, shutil
 from util import str2bool, str2tuple, s2ituple
-from data import bkgdGen, gen_train_batch_bg, get1batch4test
+from torch.utils.data import DataLoader
+from dataset import BraggNNDataset, load_val_dataset
 import numpy as np
 
-parser = argparse.ArgumentParser(description='HEDM peak finding model.')
-parser.add_argument('-gpus',   type=str, default="", help='list of visiable GPUs')
+parser = argparse.ArgumentParser(description='Bragg peak finding for HEDM.')
+parser.add_argument('-gpus',   type=str, default="0", help='list of visiable GPUs')
 parser.add_argument('-expName',type=str, default="debug", help='Experiment name')
 parser.add_argument('-lr',     type=float,default=3e-4, help='learning rate')
-parser.add_argument('-mbsize', type=int, default=512, help='mini batch size')
-parser.add_argument('-maxep',  type=int, default=100000, help='max training epoches')
-parser.add_argument('-fcsz',  type=s2ituple, default='16_8_4_2', help='size of dense layers')
-parser.add_argument('-psz', type=int, default=11, help='working patch size')
-parser.add_argument('-aug', type=int, default=1, help='augmentation size')
-parser.add_argument('-print',  type=str2bool, default=False, help='1:print to terminal; 0: redirect to file')
+parser.add_argument('-mbsz',   type=int, default=512, help='mini batch size')
+parser.add_argument('-maxep',  type=int, default=500, help='max training epoches')
+parser.add_argument('-fcsz',   type=s2ituple, default='16_8_4_2', help='size of dense layers')
+parser.add_argument('-psz',    type=int, default=11, help='working patch size')
+parser.add_argument('-aug',    type=int, default=1, help='augmentation size')
+parser.add_argument('-print',  type=str2bool, default=True, help='1:print to terminal; 0: redirect to file')
 
 args, unparsed = parser.parse_known_args()
 
@@ -35,11 +36,12 @@ if args.print == 0:
     sys.stdout = open(os.path.join(itr_out_dir, 'iter-prints.log'), 'w') 
 
 def main(args):
-    mb_data_iter = bkgdGen(data_generator=gen_train_batch_bg(mb_size=args.mbsize, psz=args.psz, \
-                                                             dev=torch_devs, rnd_shift=args.aug), \
-                           max_prefetch=args.mbsize*4)
+    print("[Info] loading data into CPU memory, it will take a while ... ...")
+    mb_data_iter = DataLoader(dataset=BraggNNDataset(psz=11, rnd_shift=args.aug), batch_size=args.mbsz, shuffle=True,\
+                              drop_last=True, pin_memory=True)
 
-    X_mb, y_mb = mb_data_iter.next()
+    X_mb_val, y_mb_val = load_val_dataset(psz=args.psz, mbsz=None, rnd_shift=0, dev=torch_devs)
+ 
     model = BraggNN(imgsz=args.psz, fcsz=args.fcsz)
     _ = model.apply(model_init) # init model weights and bias
     
@@ -49,44 +51,45 @@ def main(args):
         model = model.to(torch_devs)
 
     criterion = torch.nn.MSELoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=0) # no decay needed when augment is on
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr) 
 
     for epoch in range(args.maxep+1):
-        time_it_st = time.time()
-        X_mb, y_mb = mb_data_iter.next()
-        time_data = 1000 * (time.time() - time_it_st)
+        ep_tick = time.time()
+        time_comp = 0
+        for X_mb, y_mb in mb_data_iter:
+            it_comp_tick = time.time()
 
-        optimizer.zero_grad()
-        pred = model.forward(X_mb)
-        loss = criterion(pred, y_mb)
-        loss.backward()
-        optimizer.step() 
-        time_e2e = 1000 * (time.time() - time_it_st)
-        itr_prints = '[Info] @ %.1f Epoch: %05d, loss: %.4f, elapse: %.2fs/itr' % (\
-                    time.time(), epoch, args.psz * loss.cpu().detach().numpy(), (time.time() - time_it_st), )
+            optimizer.zero_grad()
+            pred = model.forward(X_mb.to(torch_devs))
+            loss = criterion(pred, y_mb.to(torch_devs))
+            loss.backward()
+            optimizer.step() 
 
-        if epoch % 2000 == 0:
-            if epoch == 0: 
-                X_mb_val, y_mb_val = get1batch4test(psz=args.psz, mb_size=None, idx=None, rnd_shift=0, dev=torch_devs)
+            time_comp += 1000 * (time.time() - it_comp_tick)
 
-            with torch.no_grad():
-                pred_val = model.forward(X_mb_val).cpu().numpy()            
+        time_e2e = 1000 * (time.time() - ep_tick)
 
-            pred_train = pred.cpu().detach().numpy()  
-            true_train = y_mb.cpu().numpy()  
-            l2norm_train = np.sqrt((true_train[:,0] - pred_train[:,0])**2   + (true_train[:,1] - pred_train[:,1])**2) * args.psz
-            l2norm_val   = np.sqrt((y_mb_val[:,0] - pred_val[:,0])**2 + (y_mb_val[:,1] - pred_val[:,1])**2) * args.psz
+        _prints = '[Info] @ %.1f Epoch: %05d, loss: %.4f, elapse: %.2fms/epoch (computation=%.1fms/epoch, %.2f%%)' % (\
+                   time.time(), epoch, args.psz * loss.cpu().detach().numpy(), time_e2e, time_comp, 100*time_comp/time_e2e)
+        print(_prints)
+        with torch.no_grad():
+            pred_val = model.forward(X_mb_val).cpu().numpy()            
 
-            print('[Train] @ %05d l2-norm of %5d samples: Avg.: %.4f, 50th: %.3f, 75th: %.3f, 95th: %.3f, 99.5th: %.3f (pixels). time_data: %.2fms, time_e2e: %.2fms' % (\
-                 (epoch, l2norm_train.shape[0], l2norm_train.mean()) + tuple(np.percentile(l2norm_train, (50, 75, 95, 99.5))) + (time_data, time_e2e) ) )
+        pred_train = pred.cpu().detach().numpy()  
+        true_train = y_mb.cpu().numpy()  
+        l2norm_train = np.sqrt((true_train[:,0] - pred_train[:,0])**2   + (true_train[:,1] - pred_train[:,1])**2) * args.psz
+        l2norm_val   = np.sqrt((y_mb_val[:,0]   - pred_val[:,0])**2     + (y_mb_val[:,1]   - pred_val[:,1])**2)   * args.psz
 
-            print('[Valid] @ %05d l2-norm of %5d samples: Avg.: %.4f, 50th: %.3f, 75th: %.3f, 95th: %.3f, 99.5th: %.3f (pixels) \n' % (\
-                 (epoch, l2norm_val.shape[0], l2norm_val.mean()) + tuple(np.percentile(l2norm_val, (50, 75, 95, 99.5))) ) )
+        print('[Train] @ %05d l2-norm of %5d samples: Avg.: %.4f, 50th: %.3f, 75th: %.3f, 95th: %.3f, 99.5th: %.3f (pixels).' % (\
+                (epoch, l2norm_train.shape[0], l2norm_train.mean()) + tuple(np.percentile(l2norm_train, (50, 75, 95, 99.5))) ) )
 
-            if torch.cuda.device_count() > 1:
-                torch.save(model.module.state_dict(), "%s/mdl-it%05d.pth" % (itr_out_dir, epoch))
-            else:
-                torch.save(model.state_dict(), "%s/mdl-it%05d.pth" % (itr_out_dir, epoch))
+        print('[Valid] @ %05d l2-norm of %5d samples: Avg.: %.4f, 50th: %.3f, 75th: %.3f, 95th: %.3f, 99.5th: %.3f (pixels) \n' % (\
+                (epoch, l2norm_val.shape[0], l2norm_val.mean()) + tuple(np.percentile(l2norm_val, (50, 75, 95, 99.5))) ) )
+
+        if torch.cuda.device_count() > 1:
+            torch.save(model.module.state_dict(), "%s/mdl-it%05d.pth" % (itr_out_dir, epoch))
+        else:
+            torch.save(model.state_dict(), "%s/mdl-it%05d.pth" % (itr_out_dir, epoch))
         sys.stdout.flush()
         
 if __name__ == "__main__":
