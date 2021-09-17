@@ -99,6 +99,10 @@ GROUP "/" {
 * Please refer the help of main.py, e.g., run python main.py --help to get explaination of each augment
 * Once the training process is done, you are encouraged to check the validation error in the log file to find the best model checkpoint. 
 
+## Horovod version
+There is a version, `main-hvd.py` based on Horovod to make use of mutiple (or even distributed) GPUs for computing performance study only.
+It is **not** encourged to use it for model/DNN performance study/reproducing.
+
 # Advanced configuration for the model
 
 * If you are working on normal diffractions that have reasonablly OK peaks, you do not need to customize the model. Based on our experience, the default model architecture should work reasonally well for any normal cases. The most you need is just a re-train. 
