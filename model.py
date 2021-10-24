@@ -7,45 +7,34 @@ def model_init(m):
 
 class NLB(torch.nn.Module):
     def __init__(self, in_ch, relu_a=0.01):
+        self.inter_ch = torch.div(in_ch, 2, rounding_mode='floor').item()
         super().__init__()
-        self.theta_layer = torch.nn.Conv2d(in_channels=in_ch, out_channels=in_ch//2, \
+        self.theta_layer = torch.nn.Conv2d(in_channels=in_ch, out_channels=self.inter_ch, \
                             kernel_size=1, padding=0)
-        self.phi_layer   = torch.nn.Conv2d(in_channels=in_ch, out_channels=in_ch//2, \
+        self.phi_layer   = torch.nn.Conv2d(in_channels=in_ch, out_channels=self.inter_ch, \
                             kernel_size=1, padding=0)
-        self.g_layer     = torch.nn.Conv2d(in_channels=in_ch, out_channels=in_ch//2, \
+        self.g_layer     = torch.nn.Conv2d(in_channels=in_ch, out_channels=self.inter_ch, \
                             kernel_size=1, padding=0)
         self.atten_act   = torch.nn.Softmax(dim=-1)
-        self.out_cnn     = torch.nn.Conv2d(in_channels=in_ch//2, out_channels=in_ch, \
+        self.out_cnn     = torch.nn.Conv2d(in_channels=self.inter_ch, out_channels=in_ch, \
                             kernel_size=1, padding=0)
         
-    def forward(self, x, ret_att=False):
-        mbsz, c, h, w = x.size()
-        op_ch = c // 2
+    def forward(self, x):
+        mbsz, _, h, w = x.size()
         
-        theta = self.theta_layer(x)
-        phi   = self.theta_layer(x)
-        g     = self.theta_layer(x)
+        theta = self.theta_layer(x).view(mbsz, self.inter_ch, -1).permute(0, 2, 1)
+        phi   = self.phi_layer(x).view(mbsz, self.inter_ch, -1)
+        g     = self.g_layer(x).view(mbsz, self.inter_ch, -1).permute(0, 2, 1)
         
-        theta_re = theta.view(mbsz, op_ch, -1)
-        theta_re = torch.transpose(theta_re, 1, 2)
+        theta_phi = self.atten_act(torch.matmul(theta, phi))
         
-        phi_re   = phi.view(mbsz, op_ch, -1)
+        theta_phi_g = torch.matmul(theta_phi, g).permute(0, 2, 1).view(mbsz, self.inter_ch, h, w)
         
-        theta_phi = torch.matmul(theta_re, phi_re)
-        _attention = self.atten_act(theta_phi)
-        
-        g_re = g.view(mbsz, op_ch, -1)
-        g_re = torch.transpose(g_re, 1, 2)
-        
-        _out_tmp = torch.matmul(_attention, g_re)
-        _out_tmp = torch.transpose(_out_tmp, 1, 2).reshape(mbsz, op_ch, h, w)
-        _out_tmp = self.out_cnn(_out_tmp)
+        _out_tmp = self.out_cnn(theta_phi_g)
         _out_tmp = torch.add(_out_tmp, x)
    
-        if ret_att:
-            return _attention, _out_tmp
-        else:
-            return _out_tmp
+        return _out_tmp
+
 
 class BraggNN(torch.nn.Module):
     def __init__(self, imgsz, fcsz=(64, 32, 16, 8)):
@@ -84,8 +73,8 @@ class BraggNN(torch.nn.Module):
 
         for layer in self.cnn_layers[1:]:
             _out = layer(_out)
-            
-        _out = _out.reshape(_out.size()[0], -1)
+        
+        _out = _out.flatten(start_dim=1)
         for layer in self.dense_layers:
             _out = layer(_out)
             
