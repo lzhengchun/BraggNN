@@ -18,7 +18,7 @@ This repository hosts the offical implementation of [BraggNN](https://arxiv.org/
 
 # Import a pre-trained model for inference (peak locating)
 ```
-model  = BraggNN(imgsz=, fcsz=) # should use the same argu as it in the training.
+model  = BraggNN(imgsz=11, fcsz=(16, 8, 4, 2)) # should use the same argu as it in the training.
 mdl_fn = 'models/fc16_8_4_2-sz11.pth'
 model.load_state_dict(torch.load(mdl_fn, map_location=torch.device('cpu')))
 ```
@@ -38,6 +38,8 @@ with torch.no_grad():
 ```
 ## refer to demo-inference.ipynb for a complete sample code for inference 
 `demo-inference.ipynb` has complete piece of code for inference (demo the process only, not for accuracy evaluation)
+All models under `models/` are trained with data augmentation but different patch size or model size. 
+Results presented in the [BraggNN](https://arxiv.org/abs/2008.08198) paper can be reproduced using trained model `models/fc16_8_4_2-sz11-aug0.pth`, or retrain a new one (may have difference because of random initialization) by `python ./main.py -aug=0`.
 
 # Retrain
 
