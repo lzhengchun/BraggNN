@@ -2,7 +2,7 @@ from model import model_init, BraggNN
 import torch, argparse, os, time, sys, shutil, logging
 from util import str2bool, str2tuple, s2ituple
 from torch.utils.data import DataLoader
-from dataset import BraggNNDataset, load_val_dataset
+from dataset import BraggNNDataset
 import numpy as np
 
 parser = argparse.ArgumentParser(description='Bragg peak finding for HEDM.')
@@ -34,12 +34,18 @@ logging.basicConfig(filename=os.path.join(itr_out_dir, 'BraggNN.log'), level=log
 logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
 def main(args):
-    logging.info("[Info] loading data into CPU memory, it will take a while ... ...")
-    mb_data_iter = DataLoader(dataset=BraggNNDataset(psz=11, rnd_shift=args.aug), batch_size=args.mbsz, shuffle=True,\
-                              num_workers=4, prefetch_factor=args.mbsz, drop_last=True, pin_memory=True)
+    logging.info("[%.3f] loading data into CPU memory, it will take a while ... ..." % (time.time(), ))
+    ds_train = BraggNNDataset(psz=args.psz, rnd_shift=args.aug, use='train')
+    dl_train = DataLoader(dataset=ds_train, batch_size=args.mbsz, shuffle=True,\
+                          num_workers=8, prefetch_factor=args.mbsz, drop_last=True, pin_memory=True)
 
-    X_mb_val, y_mb_val = load_val_dataset(psz=args.psz, mbsz=None, rnd_shift=0, dev=torch_devs)
+    ds_valid = BraggNNDataset(psz=args.psz, rnd_shift=0, use='validation')
+    dl_valid = DataLoader(dataset=ds_valid, batch_size=args.mbsz, shuffle=False, \
+                          num_workers=8, prefetch_factor=args.mbsz, drop_last=False, pin_memory=True)
  
+    logging.info("[%.3f] loaded training set with %d samples, and validation set with %d samples " % (\
+                 time.time(), len(ds_train), len(ds_valid)))
+
     model = BraggNN(imgsz=args.psz, fcsz=args.fcsz)
     _ = model.apply(model_init) # init model weights and bias
     
@@ -55,7 +61,7 @@ def main(args):
     for epoch in range(args.maxep):
         ep_tick = time.time()
         time_comp = 0
-        for X_mb, y_mb in mb_data_iter:
+        for X_mb, y_mb in dl_train:
             it_comp_tick = time.time()
 
             optimizer.zero_grad()
@@ -69,16 +75,23 @@ def main(args):
         time_e2e = 1000 * (time.time() - ep_tick)
         time_on_training += time_e2e
 
-        _prints = '[Info] @ %.1f Epoch: %05d, loss: %.4f, elapse: %.2fms/epoch (computation=%.1fms/epoch, %.2f%%)' % (\
+        _prints = '[%.3f] Epoch: %05d, loss: %.4f, elapse: %.2fms/epoch (computation=%.1fms/epoch, %.2f%%)' % (\
                    time.time(), epoch, args.psz * loss.cpu().detach().numpy(), time_e2e, time_comp, 100*time_comp/time_e2e)
         logging.info(_prints)
-        with torch.no_grad():
-            pred_val = model.forward(X_mb_val).cpu().numpy()
+
+        pred_val, gt_val = [], []
+        for X_mb_val, y_mb_val in dl_valid:
+            with torch.no_grad():
+                _pred = model.forward(X_mb_val.to(torch_devs))
+                pred_val.append(_pred.cpu().numpy())
+                gt_val.append(y_mb_val.numpy())
+        pred_val = np.concatenate(pred_val, axis=0)
+        gt_val   = np.concatenate(gt_val,   axis=0)
 
         pred_train = pred.cpu().detach().numpy()  
         true_train = y_mb.cpu().numpy()  
         l2norm_train = np.sqrt((true_train[:,0] - pred_train[:,0])**2   + (true_train[:,1] - pred_train[:,1])**2) * args.psz
-        l2norm_val   = np.sqrt((y_mb_val[:,0]   - pred_val[:,0])**2     + (y_mb_val[:,1]   - pred_val[:,1])**2)   * args.psz
+        l2norm_val   = np.sqrt((gt_val[:,0]     - pred_val[:,0])**2     + (gt_val[:,1]     - pred_val[:,1])**2)   * args.psz
 
         logging.info('[Train] @ %05d l2-norm of %5d samples: Avg.: %.4f, 50th: %.3f, 75th: %.3f, 95th: %.3f, 99.5th: %.3f (pixels).' % (\
                      (epoch, l2norm_train.shape[0], l2norm_train.mean()) + tuple(np.percentile(l2norm_train, (50, 75, 95, 99.5))) ) )
@@ -89,7 +102,7 @@ def main(args):
         torch.save(model.state_dict(), "%s/mdl-it%05d.pth" % (itr_out_dir, epoch))
 
     logging.info("Trained for %3d epoches, each with %d steps (BS=%d) took %.3f seconds" % (\
-                 args.maxep, len(mb_data_iter), X_mb.shape[0], time_on_training*1e-3))
+                 args.maxep, len(dl_train), args.mbsz, time_on_training*1e-3))
 
 if __name__ == "__main__":
     main(args)
