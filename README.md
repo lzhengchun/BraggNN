@@ -110,3 +110,18 @@ It is **not** encourged to use it for model/DNN performance study/reproducing.
 * If you are working on normal diffractions that have reasonablly OK peaks, you do not need to customize the model. Based on our experience, the default model architecture should work reasonally well for any normal cases. The most you need is just a re-train. 
 
 * If you have some basic knowledge about machine learning and know the intuition of tuning model size based on training error and validation error. You are encorage to keep reading instructions to change the size of the model.
+
+# citation
+please consider to cite our paper if you find this open source code repo helpful to your research 
+```
+@misc{liu2021braggnn,
+title={{BraggNN: Fast X-ray Bragg Peak Analysis Using Deep Learning}}, 
+author={Zhengchun Liu and Hemant Sharma and Jun-Sang Park and Peter Kenesei and Antonino Miceli and Jonathan Almer and Rajkumar Kettimuthu and Ian Foster},
+year={2021},
+eprint={2008.08198},
+archivePrefix={arXiv},
+primaryClass={eess.IV}
+}
+```
+
+
