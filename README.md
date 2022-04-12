@@ -114,13 +114,14 @@ It is **not** encourged to use it for model/DNN performance study/reproducing.
 # citation
 please consider to cite our paper if you find this open source code repo helpful to your research 
 ```
-@misc{liu2021braggnn,
-title={{BraggNN: Fast X-ray Bragg Peak Analysis Using Deep Learning}}, 
-author={Zhengchun Liu and Hemant Sharma and Jun-Sang Park and Peter Kenesei and Antonino Miceli and Jonathan Almer and Rajkumar Kettimuthu and Ian Foster},
-year={2021},
-eprint={2008.08198},
-archivePrefix={arXiv},
-primaryClass={eess.IV}
+@article{liu2022braggnn,
+  title={BraggNN: fast X-ray Bragg peak analysis using deep learning},
+  author={Liu, Zhengchun and Sharma, Hemant and Park, J-S and Kenesei, Peter and Miceli, Antonino and Almer, Jonathan and Kettimuthu, Rajkumar and Foster, Ian},
+  journal={IUCrJ},
+  volume={9},
+  number={1},
+  year={2022},
+  publisher={International Union of Crystallography}
 }
 ```
 
